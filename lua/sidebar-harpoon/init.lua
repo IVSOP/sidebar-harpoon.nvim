@@ -106,7 +106,8 @@ end
 function M.focus()
     if not M.is_focused()
     then
-        vim.api.nvim_set_current_win(M.tree_win)    end
+        vim.api.nvim_set_current_win(M.tree_win)
+    end
 end
 
 -- assumes open

@@ -29,6 +29,10 @@ Then, hijack harpoon's configuration. For example:
 
 ```lua
 -- ..........
+dependencies = {
+    -- ........
+    "IVSOP/sidebar-harpoon.nvim" -- need to add it as a dependency of harpoon
+},
 config = function()
     local harpoon = require("harpoon")
 
