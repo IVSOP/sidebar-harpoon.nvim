@@ -1,8 +1,8 @@
 local M = {}
 
 M.buf = nil
-M.is_open = false
 M.is_focused = false -- cursed, whatever
+M.window = nil
 
 -- internally creates a buffer
 function M.create()
@@ -18,20 +18,15 @@ end
 
 -- opens buffer in a new window and the window tree
 function M.open()
-    if not M.is_open
+    if not M.is_open()
     then
         vim.cmd("NvimTreeOpen") -- will focus it automatically
-        -- vim.cmd("split")
-        -- vim.cmd("wincmd j")
-        -- vim.api.nvim_set_current_buf(M.buf)
-        -- local win = vim.api.nvim_get_current_win()
-        local win = vim.api.nvim_open_win(M.buf, false, {split = "below", height = 9}) -- TODO: set initial bufpos here
-        vim.api.nvim_set_option_value("relativenumber", false, {win = win})
-        vim.api.nvim_set_option_value("signcolumn", "no", {win = win})
-        vim.api.nvim_set_option_value("cursorline", true, {win = win})
-        -- vim.api.nvim_win_set_height(win, 9)
-        vim.cmd("wincmd h")
-        M.is_open = true
+        M.win = vim.api.nvim_open_win(M.buf, false, {split = "below", height = 9}) -- TODO: set initial bufpos here
+        -- window specific options
+        vim.api.nvim_set_option_value("relativenumber", false, {win = M.win})
+        vim.api.nvim_set_option_value("signcolumn", "no", {win = M.win})
+        vim.api.nvim_set_option_value("cursorline", true, {win = M.win})
+        vim.cmd("wincmd h") -- TODO: unfuck this
     end
 end
 
@@ -41,20 +36,26 @@ function M.display(lines)
     vim.api.nvim_buf_set_lines(M.buf, 0, -1, false, lines)
 end
 
--- closes buffer and tree
+function M.is_focused()
+    return vim.api.nvim_get_current_win() == M.win
+end
+
+-- is open if window object exists and the window is valid
+function M.is_open()
+    return (M.win ~= nil and vim.api.nvim_win_is_valid(M.win))
+end
+
 function M.close()
-    if M.is_open
+    if M.is_open()
     then
         vim.cmd("NvimTreeClose")
-        vim.cmd("wincmd l")
-        vim.cmd("close")
-        -- print(vim.api.nvim_buf_is_valid(M.buf))
-        M.is_open = false
+        vim.api.nvim_win_close(M.win, false)
+        M.win = nil
     end
 end
 
 function M.toggle()
-    if M.is_open
+    if M.is_open()
     then
         M.close()
     else
@@ -68,28 +69,24 @@ end
 
 -- assumes open
 function M.focus()
-    if not M.is_focused
+    if not M.is_focused()
     then
-        vim.cmd("wincmd l")
-        -- vim.cmd("wincmd j")
-        M.is_focused = true
+        vim.api.nvim_set_current_win(M.win)
     end
 end
 
 -- assumes open
 function M.unfocus()
-    if M.is_focused
+    if M.is_focused()
     then
-        vim.cmd("wincmd h")
-        -- vim.cmd("wincmd j")
-        M.is_focused = false
+        vim.cmd("wincmd h") -- TODO: unfuck this
     end
 end
 
 function M.focus_toggle()
-    if M.is_open
+    if M.is_open()
     then
-        if M.is_focused
+        if M.is_focused()
         then
             M.unfocus()
         else
@@ -100,37 +97,9 @@ end
 
 function M.select(number)
     M.focus()
-    vim.cmd("wincmd j")
-    local win = vim.api.nvim_get_current_win()
-    vim.api.nvim_win_set_cursor(win, { number, 0 })
+    vim.api.nvim_win_set_cursor(M.win, { number, 0 })
     M.unfocus()
 end
 
 return M
-
--- return {
---     "sidebar-nvim/sidebar.nvim",
---     dependencies = {
---         "nvim-tree/nvim-tree.lua",
---     },
---     config = function()
---         require("sidebar-nvim").setup({
---             disable_default_keybindings = 0,
---             bindings = nil,
---             open = false,
---             side = "right",
---             initial_width = 35,
---             hide_statusline = false,
---             update_interval = 1000,
---             sections = { "files" },
---             section_separator = {"", "-----", ""},
---             section_title_separator = {""},
---             containers = {
---                 attach_shell = "/bin/sh", show_all = true, interval = 5000,
---             },
---             datetime = { format = "%a %b %d, %H:%M", clocks = { { name = "local" } } },
---             todos = { ignored_paths = { "~" } },
---         })
---     end
--- }
 
