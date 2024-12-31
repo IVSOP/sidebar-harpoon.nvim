@@ -78,3 +78,6 @@ local function select(number)
     display(list)
 end
 ```
+
+There is also a version that automatically determines which line to select (making the select() call here useless). Just use `sbh.display_and_select(list:display())`
+
